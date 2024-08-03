@@ -1,0 +1,157 @@
+datasource db {
+    provider = "mongodb"
+    url      = env("DATABASE_URL")
+    relationMode = "prisma"
+}
+
+generator client {
+    provider = "prisma-client-js"
+}
+
+model User {
+    id       String    @id @default(auto()) @map("_id") @db.ObjectId
+    username String    @unique
+    password String
+    image    String
+    email    String    @unique
+    isAdmin  Boolean   @default(false)
+    role     Role?     @relation(fields: [roleId], references: [id], onDelete: Cascade)
+    roleId   String?   @db.ObjectId
+
+    @@map("users")
+}
+
+model Role {
+    id              String          @id @default(auto()) @map("_id") @db.ObjectId
+    roleName        String
+    user            User[]
+    rolePermissions RolePermission?
+
+    @@map("roles")
+}
+
+model RolePermission {
+    id                String  @id @default(auto()) @map("_id") @db.ObjectId
+    role              Role    @relation(fields: [roleId], references: [id], onDelete: Cascade)
+    roleId            String  @unique @db.ObjectId
+    // user permissions
+    createUser        Boolean
+    readUser          Boolean
+    editUser          Boolean
+    deleteUser        Boolean
+    // product permissions
+    createProduct     Boolean
+    readProduct       Boolean
+    editProduct       Boolean
+    deleteProduct     Boolean
+    // category permissions
+    createCategory    Boolean
+    readCategory      Boolean
+    editCategory      Boolean
+    deleteCategory    Boolean
+    // stock in permissions
+    createStock       Boolean
+    readStock         Boolean
+    editStock         Boolean
+    deleteStock       Boolean
+    // supplier permissions
+    createSupplier    Boolean
+    readSupplier      Boolean
+    editSupplier      Boolean
+    deleteSupplier    Boolean
+    // order permissions
+    createOrder       Boolean
+    readOrder         Boolean
+    editOrder         Boolean
+    deleteOrder       Boolean
+    // order detail permissions
+    createOrderDetail Boolean
+    readOrderDetail   Boolean
+    editOrderDetail   Boolean
+    deleteOrderDetail Boolean
+
+    @@map("rolePermissions")
+}
+
+model Product {
+    id              String         @id @default(auto()) @map("_id") @db.ObjectId
+    productName     String
+    description     String
+    unitPrice       Float
+    quantityInStock Int            @default(0)
+    reorderLevel    Int
+    productImage    String
+    category        Category?      @relation(fields: [categoryId], references: [id])
+    categoryId      String?        @db.ObjectId
+    supplier        Supplier?      @relation(fields: [supplierId], references: [id])
+    supplierId      String?        @db.ObjectId
+    orderDetail     OrderDetail[]
+    stockIn         StockIn[]
+    createdBy       String // Reference to the user who created the product
+    updatedBy       String // Reference to the user who last updated the product
+
+    @@map("products")
+}
+
+model StockIn {
+    id          String   @id @default(auto()) @map("_id") @db.ObjectId
+    product     Product? @relation(fields: [productId], references: [id])
+    productId   String   @db.ObjectId
+    quantity    Int
+    totalPrice  Int
+    createdAt   DateTime
+    createdBy   String
+    updatedBy   String
+
+    @@map("stockIns")
+}
+
+model Category {
+    id           String    @id @default(auto()) @map("_id") @db.ObjectId
+    categoryName String
+    products     Product[]
+    createdBy    String // Reference to the user who created the category
+    updatedBy    String // Reference to the user who last updated the category
+
+    @@map("categories")
+}
+
+model Supplier {
+    id           String    @id @default(auto()) @map("_id") @db.ObjectId
+    supplierName String
+    contactName  String
+    contactEmail String
+    contactPhone String
+    address      String
+    products     Product[]
+    createdBy    String // Reference to the user who created the supplier
+    updatedBy    String // Reference to the user who last updated the supplier
+
+    @@map("suppliers")
+}
+
+model Order {
+    id                  String        @id @default(auto()) @map("_id") @db.ObjectId
+    customerName        String        @default("No customer name added")
+    customerAddress     String        @default("No address added")
+    orderDate           DateTime
+    totalAmount         Float
+    orderDetails        OrderDetail[]
+    createdBy           String // Reference to the user who created the order
+    updatedBy           String // Reference to the user who last updated the order
+
+    @@map("orders")
+}
+
+model OrderDetail {
+    id        String   @id @default(auto()) @map("_id") @db.ObjectId
+    order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+    orderId   String   @db.ObjectId
+    product   Product? @relation(fields: [productId], references: [id])
+    productId String   @db.ObjectId
+    quantity  Int
+    unitPrice Float
+    subTotal  Float
+
+    @@map("orderDetails")
+}
